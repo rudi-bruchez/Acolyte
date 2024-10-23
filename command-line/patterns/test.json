@@ -1,0 +1,34 @@
+{
+    "title": "Optimisation des performances Microsoft SQL Server",
+    "type": "support de cours",
+    "output_format": "markdown",
+    "description": "Ce support de cours est destiné aux administrateurs de bases de données SQL Server qui souhaitent optimiser les performances de leurs bases de données.",
+    "keywords": ["SQL Server", "optimisation", "performances"],
+    "authors": ["Rudi Bruchez"],
+    "date": "2024-01-01",
+    "lang": "fr",
+    "system_prompt": "écris dans un style didactique et informatif",
+    "main_prompt": "écris un support de cours sur l'optimisation des performances Microsoft SQL Server",
+    "structure":  {},
+    "content": [
+        {
+            "type": "section",
+            "title": "Introduction",
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": "Ce support de cours est destiné aux administrateurs de bases de données SQL Server qui souhaitent optimiser les performances de leurs bases de données."
+                }
+            ]
+        }
+    ],
+    "steps": [
+        {
+            "type": "brainstorm",
+            "title": "outline",
+            "prompt": "Liste les grandes sections de ce support de cours.",
+            "source": "./idees.md"
+        }
+    ]
+
+}
