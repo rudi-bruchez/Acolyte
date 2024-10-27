@@ -20,7 +20,7 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         self.dispatchhelper = self.createUnoService("com.sun.star.frame.DispatchHelper")
         self.doc = self.desktop.getCurrentComponent()
 
-        api_key = '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'
+        api_key = 'XXX'
         self.client = OpenAI(api_key=api_key)
 
     def trigger(self, command):
