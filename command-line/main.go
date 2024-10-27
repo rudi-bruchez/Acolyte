@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/openai"
-	"pachadata.com/ghostwriter/v2/llm"
+	"pachadata.com/acolyte/v2/llm"
 )
 
 type Config struct {

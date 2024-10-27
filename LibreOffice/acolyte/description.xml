@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description xmlns="http://openoffice.org/extensions/description/2006"
+             xmlns:d="http://openoffice.org/extensions/description/2006"
+             xmlns:l="http://libreoffice.org/extensions/description/2011"
+             xmlns:xlink="http://www.w3.org/1999/xlink">
+    <identifier value="com.pachadata.libreoffice.Acolyte"/>
+    <version value="1.0" />
+    <display-name>
+        <name lang="en">LibreOffice Writer Acolyte</name>
+    </display-name>
+    <icon>
+        <default xlink:href="img/acolyte-logo.png" />
+    </icon>
+    <publisher>
+        <name lang="en" xlink:href="https://www.pachadata.com">Rudi Bruchez</name>
+    </publisher>
+    <dependencies>
+        <l:LibreOffice-minimal-version value="7.0" l:name="LibreOffice 7.0" />
+        <!--<d:OpenOffice.org-minimal-version value="4.0" d:name="OpenOffice.org 4.0" />-->
+    </dependencies> 
+    <!-- <extension-description>
+        <src xlink:href="description/description_en.txt"/>
+    </extension-description> -->
+</description>

@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<oor:component-data oor:package="org.openoffice.Office" oor:name="Addons"
+	xmlns:oor="http://openoffice.org/2001/registry" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<node oor:name="AddonUI">
+
+		<!-- <node oor:name="OfficeToolBar">
+			<node oor:name="org.libreoffice.pachadata.acolyte.toolbar" oor:op="replace">
+				<prop oor:name="Title" oor:type="xs:string">
+					<value>Acolyte</value>
+				</prop>
+				<node oor:name="t01" oor:op="replace">
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>service:org.libreoffice.pachadata.acolyte?inplacePrompt</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value xml:lang="fr">Brouillon</value>
+						<value xml:lang="en-US">In-place Prompt</value>
+					</prop>
+				</node>
+				<node oor:name="t02" oor:op="replace">
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>service:org.libreoffice.pachadata.acolyte?completion</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value xml:lang="en-US">Complétion</value>
+						<value xml:lang="en-US">Completion</value>
+					</prop>
+				</node>
+			</node>
+		</node> -->
+
+		<node oor:name="OfficeMenuBar">
+			<node oor:name="com.pachadata.libreoffice.Acolyte.menubar" oor:op="replace">
+				<prop oor:name="Title" oor:type="xs:string">
+					<value xml:lang="en-US"></value>
+					<value/>
+                	<value xml:lang="fr">A~colyte</value>
+                	<value xml:lang="en-US">A~colyte</value>
+				</prop>
+				<prop oor:name="Target" oor:type="xs:string">
+					<value>_self</value>
+				</prop>
+				<prop oor:name="Context" oor:type="xs:string">
+					<value>com.sun.star.text.TextDocument</value>
+				</prop>
+				<node oor:name="Submenu">
+					<node oor:name="M1" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="fr">Réponds au prompt</value>
+							<value xml:lang="en-US">Answer Prompt</value>
+						</prop>
+						<prop oor:name="URL">
+							<value>service:com.pachadata.libreoffice.Acolyte?insertPrompt</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="M2" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="fr">Récrit</value>
+							<value xml:lang="en-US">Rewrite</value>
+						</prop>
+						<prop oor:name="URL">
+							<value>service:com.pachadata.libreoffice.Acolyte?rewrite</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="M3" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="fr">Prépare le prompt</value>
+							<value xml:lang="en-US">Prepare prompt</value>
+						</prop>
+						<prop oor:name="URL">
+							<value>service:com.pachadata.libreoffice.Acolyte?preparePrompt</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="M4" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="fr">Nouveau Document</value>
+							<value xml:lang="en-US">New Document</value>
+						</prop>
+						<prop oor:name="URL">
+							<value>service:com.pachadata.libreoffice.Acolyte?createDocumentFromPrompt</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="M5" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="fr">Debug</value>
+							<value xml:lang="en-US">Debug</value>
+						</prop>
+						<prop oor:name="URL">
+							<value>service:com.pachadata.libreoffice.Acolyte?debug</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+				</node>
+			</node>
+		</node>
+
+	</node>
+</oor:component-data>
