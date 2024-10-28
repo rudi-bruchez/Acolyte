@@ -4,8 +4,15 @@ import uno
 import unohelper
 from com.sun.star.document import XEventListener
 from com.sun.star.task import XJobExecutor
-from openai import OpenAI
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.output_parsers import StrOutputParser
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph, MessagesState
+from langgraph.prebuilt import ToolNode
 from pathlib import Path
+
+from LibreOffice import LO
 
 class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
     def __init__(self, context):
@@ -20,8 +27,33 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         self.dispatchhelper = self.createUnoService("com.sun.star.frame.DispatchHelper")
         self.doc = self.desktop.getCurrentComponent()
 
-        api_key = 'XXX'
-        self.client = OpenAI(api_key=api_key)
+        # Langchain and Langgraph
+        api_key = 'sk-proj-XXX'
+        os.environ["OPENAI_API_KEY"] = api_key
+        self.client = ChatOpenAI(model="gpt-4o-mini")
+
+        # Define a new graph
+        self.workflow = StateGraph(MessagesState)
+        self.workflow.add_node("agent", self.__call_model)
+
+        # Set the entrypoint as `agent`
+        # This means that this node is the first one called
+        self.workflow.add_edge(START, "agent")
+
+        # Initialize memory to persist state between graph runs
+        self.checkpointer = MemorySaver()
+
+        # Finally, we compile it!
+        # This compiles it into a LangChain Runnable,
+        # meaning you can use it as you would any other runnable.
+        # Note that we're (optionally) passing the memory when compiling the graph
+        self.langchain_app = self.workflow.compile(checkpointer=self.checkpointer)
+
+    def __call_model(self, state: MessagesState):
+        messages = state['messages']
+        response = self.client.invoke(messages)
+        # We return a list, because this will get added to the existing list
+        return {"messages": [response]}
 
     def trigger(self, command):
         """
@@ -86,15 +118,20 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
     def insertPrompt(self):
         cur = self.cursor
         texte = cur.getString()
+        print(texte)
 
         # cur.String = f"{texte}\n"
         cur.gotoEnd(False)
 
         try:
-            reponse = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": texte}]
-            )
+            messages = [
+                # SystemMessage(content="Translate the following from English into Italian"),
+                HumanMessage(content=texte),
+            ]
+            parser = StrOutputParser()
+            chain = self.client | parser
+            reponse = chain.invoke(messages)
+            print(reponse)
         except Exception as e:
             cur.String = "Erreur " + str(e)
             self.formatMarkdown
@@ -105,7 +142,7 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         model = self.desktop.getCurrentComponent()
         text = model.Text
         cursor = text.createTextCursor()
-        text.insertString(cursor, reponse.choices[0].message.content, 0)
+        text.insertString(cursor, reponse, 0)
         # cur.String = reponse.choices[0].message.content
         # cur.gotoEnd(True)
 
@@ -117,19 +154,19 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         cur.gotoEnd(False)
 
         try:
-            reponse = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "modife le texte suivant en le rendant plus professionnel et concis. Propose trois version différentes"},
-                    {"role": "user", "content": texte}
-                    ]
-            )
+            messages = [
+                SystemMessage(content="modife le texte suivant en le rendant plus professionnel et concis. Propose trois version différentes"),
+                HumanMessage(content=texte),
+            ]
+            parser = StrOutputParser()
+            chain = self.client | parser
+            reponse = chain.invoke(messages)
         except Exception as e:
             cur.String = "Erreur " + str(e)
             cur.gotoEnd(True)
             return
 
-        cur.String = reponse.choices[0].message.content
+        cur.String = reponse
         cur.gotoEnd(True)
 
     def createDocumentFromPrompt(self):
@@ -137,10 +174,13 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         texte = cur.getString()
 
         try:
-            reponse = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": texte}]
-            )
+            messages = [
+                # SystemMessage(content="Translate the following from English into Italian"),
+                HumanMessage(content=texte),
+            ]
+            parser = StrOutputParser()
+            chain = self.client | parser
+            reponse = chain.invoke(messages)
         except Exception as e:
             cur.String = "Erreur " + str(e)
             self.formatMarkdown
@@ -156,13 +196,13 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         cursor = text.createTextCursor()
 
         # Insert some sample text (optional)
-        text.insertString(cursor, reponse.choices[0].message.content, 0)
+        text.insertString(cursor, reponse, 0)
 
         return new_doc
 
     def debug(self):
         cur = self.cursor
-        texte = cur.getString()
+        # texte = cur.getString()
 
         # Get the configuration provider
         # config_provider = self.context.ServiceManager.createInstanceWithContext(
@@ -177,11 +217,16 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
 
         # # Get the User-specific configuration path
         # self.user_config_path = path_settings.getByName("User")
-        dir_path = os.path.dirname(os.path.realpath(__file__))
 
-        this_doc_url = self.doc.URL
-        this_doc_sys_path = uno.fileUrlToSystemPath(this_doc_url)
-        this_doc_parent_path = Path(this_doc_sys_path).parent
+        # dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        # this_doc_url = self.doc.URL
+        # this_doc_sys_path = uno.fileUrlToSystemPath(this_doc_url)
+        # this_doc_parent_path = Path(this_doc_sys_path).parent
+
+        lo = LO(self.doc)
+        guid = lo.addDocumentGuid()
+
 
         # Print the path
         # self.show_message_box("Configuration Path", self.user_config_path)
@@ -190,10 +235,16 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         #     - LibreOffice configuration directory: {self.user_config_path}
         #     - Current directory: {dir_path}
         # """
+        # cur.String = f"""
+        #     - Current directory: {dir_path}
+        #     - Current document path: {this_doc_parent_path}
+        #     - Document Acolyte Id: {guid}
+        # """
+
         cur.String = f"""
-            - Current directory: {dir_path}
-            - Current document path: {this_doc_parent_path}
+            - Document Acolyte Id: {guid}
         """
+
 
     # boilerplate code below this point
     def createUnoService(self, name):
