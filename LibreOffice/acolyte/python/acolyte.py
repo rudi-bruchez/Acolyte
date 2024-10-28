@@ -28,7 +28,7 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         self.doc = self.desktop.getCurrentComponent()
 
         # Langchain and Langgraph
-        api_key = 'sk-proj-XXX'
+        api_key = 'XXX'
         os.environ["OPENAI_API_KEY"] = api_key
         self.client = ChatOpenAI(model="gpt-4o-mini")
 
