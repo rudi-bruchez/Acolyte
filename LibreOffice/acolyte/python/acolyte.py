@@ -1,7 +1,6 @@
-import sys
-import os
-import uno
-import unohelper
+# -*- coding: utf-8 -*-
+import os, sys
+import uno, unohelper
 from com.sun.star.document import XEventListener
 from com.sun.star.task import XJobExecutor
 from langchain_openai import ChatOpenAI
@@ -13,8 +12,12 @@ from langgraph.prebuilt import ToolNode
 from pathlib import Path
 
 from LibreOffice import LO
+from Agent import Agent
 
-class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
+sys.stderr = sys.stdout
+
+# class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
+class Acolyte(unohelper.Base, XJobExecutor):
     def __init__(self, context):
         """
         Initialize the Acolyte class.
@@ -30,30 +33,8 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         # Langchain and Langgraph
         api_key = 'XXX'
         os.environ["OPENAI_API_KEY"] = api_key
-        self.client = ChatOpenAI(model="gpt-4o-mini")
-
-        # Define a new graph
-        self.workflow = StateGraph(MessagesState)
-        self.workflow.add_node("agent", self.__call_model)
-
-        # Set the entrypoint as `agent`
-        # This means that this node is the first one called
-        self.workflow.add_edge(START, "agent")
-
-        # Initialize memory to persist state between graph runs
-        self.checkpointer = MemorySaver()
-
-        # Finally, we compile it!
-        # This compiles it into a LangChain Runnable,
-        # meaning you can use it as you would any other runnable.
-        # Note that we're (optionally) passing the memory when compiling the graph
-        self.langchain_app = self.workflow.compile(checkpointer=self.checkpointer)
-
-    def __call_model(self, state: MessagesState):
-        messages = state['messages']
-        response = self.client.invoke(messages)
-        # We return a list, because this will get added to the existing list
-        return {"messages": [response]}
+        # self.client = ChatOpenAI(model="gpt-4o-mini")
+        self.client = Agent(self.doc)
 
     def trigger(self, command):
         """
@@ -123,26 +104,13 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         # cur.String = f"{texte}\n"
         cur.gotoEnd(False)
 
-        try:
-            messages = [
-                # SystemMessage(content="Translate the following from English into Italian"),
-                HumanMessage(content=texte),
-            ]
-            parser = StrOutputParser()
-            chain = self.client | parser
-            reponse = chain.invoke(messages)
-            print(reponse)
-        except Exception as e:
-            cur.String = "Erreur " + str(e)
-            self.formatMarkdown
-            cur.gotoEnd(True)
-            return
+        response = self.client.GetSimpleResponse(texte)
 
         # cur.String = reponse.choices[0].message.content
         model = self.desktop.getCurrentComponent()
         text = model.Text
         cursor = text.createTextCursor()
-        text.insertString(cursor, reponse, 0)
+        text.insertString(cursor, response, 0)
         # cur.String = reponse.choices[0].message.content
         # cur.gotoEnd(True)
 
@@ -153,39 +121,19 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         cur.String = f"{texte}\n\n"
         cur.gotoEnd(False)
 
-        try:
-            messages = [
-                SystemMessage(content="modife le texte suivant en le rendant plus professionnel et concis. Propose trois version différentes"),
-                HumanMessage(content=texte),
-            ]
-            parser = StrOutputParser()
-            chain = self.client | parser
-            reponse = chain.invoke(messages)
-        except Exception as e:
-            cur.String = "Erreur " + str(e)
-            cur.gotoEnd(True)
-            return
+        response = self.client.GetSimpleResponse(
+            texte,
+            "modife le texte suivant en le rendant plus professionnel et concis. Propose trois version différentes"
+            )
 
-        cur.String = reponse
+        cur.String = response
         cur.gotoEnd(True)
 
     def createDocumentFromPrompt(self):
         cur = self.cursor
         texte = cur.getString()
 
-        try:
-            messages = [
-                # SystemMessage(content="Translate the following from English into Italian"),
-                HumanMessage(content=texte),
-            ]
-            parser = StrOutputParser()
-            chain = self.client | parser
-            reponse = chain.invoke(messages)
-        except Exception as e:
-            cur.String = "Erreur " + str(e)
-            self.formatMarkdown
-            cur.gotoEnd(True)
-            return
+        response = self.client.GetSimpleResponse(texte)
 
         # Create a new Writer document
         new_doc = self.desktop.loadComponentFromURL("private:factory/swriter", 
@@ -196,7 +144,7 @@ class Acolyte(unohelper.Base, XJobExecutor, XEventListener):
         cursor = text.createTextCursor()
 
         # Insert some sample text (optional)
-        text.insertString(cursor, reponse, 0)
+        text.insertString(cursor, response, 0)
 
         return new_doc
 

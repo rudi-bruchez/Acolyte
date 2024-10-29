@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Helpers for LibreOffice extension
 
 import os
