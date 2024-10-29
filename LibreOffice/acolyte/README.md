@@ -12,7 +12,7 @@ pip install langchain
 + run `./python.exe get-pip.py` to install pip
 + install the needed modules with 
   + `./python.exe -m pip install openai`
-  + `./python.exe -m pip install langchain langchain-openai langgraph`
+  + `./python.exe -m pip install langchain langchain-openai langgraph python-dotenv`
 
 ## docs to read
 

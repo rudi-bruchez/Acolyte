@@ -21,7 +21,7 @@ class LO:
         # self.current_controller_name = self.current_controller.getName()
         # self.current_controller_frame = self.current_controller.getFrame()
         # self.current_controller_frame_name = self.current_controller_frame.getName
-    
+
     def getTOC(self) -> str:
         cur = self.doc.Text.createTextCursor()
         cur.gotoStart(False)
@@ -34,19 +34,19 @@ class LO:
         # text.insertTextContent(cursor, toc, False)
         toc.update()
 
-    def GetHeadings(self):
-        # https://api.libreoffice.org/docs/idl/ref/namespacecom_1_1sun_1_1star_1_1style_1_1ParagraphStyleCategory.html
+    # def GetHeadings(self):
+    #     # https://api.libreoffice.org/docs/idl/ref/namespacecom_1_1sun_1_1star_1_1style_1_1ParagraphStyleCategory.html
 
-    def changeLanguage(self):
-        dim dispatcher as object
-        document   = ThisComponent.CurrentController.Frame
-        dispatcher = createUnoService("com.sun.star.frame.DispatchHelper")
+    # def changeLanguage(self):
+    #     dim dispatcher as object
+    #     document   = ThisComponent.CurrentController.Frame
+    #     dispatcher = createUnoService("com.sun.star.frame.DispatchHelper")
 
-        dim args1(0) as new com.sun.star.beans.PropertyValue
-        args1(0).Name = "Language"
-        args1(0).Value = "Default_English (UK)"
+    #     dim args1(0) as new com.sun.star.beans.PropertyValue
+    #     args1(0).Name = "Language"
+    #     args1(0).Value = "Default_English (UK)"
 
-        dispatcher.executeDispatch(document, ".uno:LanguageStatus", "", 0, args1())
+    #     dispatcher.executeDispatch(document, ".uno:LanguageStatus", "", 0, args1())
 
     def ReadParagraphs(self):
         parenum = self.doc.Text.createEnumeration()
@@ -71,11 +71,11 @@ class LO:
         cur.gotoRange(PickedRange, False)  # False means the cursor does not expand when it moves
         # Print "Heading is on page " + ViewCurs.Page
 
-    def getWord(self) -> str:
-        Cursor = ThisComponent.Text.createTextCursor()
-        Cursor.gotoStart(False)
-        Cursor.gotoEndOfWord(True)
-        msgbox Cursor.getString()
+    # def getWord(self) -> str:
+    #     Cursor = ThisComponent.Text.createTextCursor()
+    #     Cursor.gotoStart(False)
+    #     Cursor.gotoEndOfWord(True)
+    #     msgbox Cursor.getString()
 
     def SearchRegex(self, regex):
         search = self.doc.createSearchDescriptor()
@@ -86,11 +86,11 @@ class LO:
         search.SearchWords = False
 
         return self.doc.findAll(search)
-    
+
     def ImportDocument(self):
         pathname = os.path.dirname(self.doc.getURL())
         importCursor = self.doc.Text.createTextCursor()
-        
+
         selsFound = self.SearchRegex(self.doc, "\{includetext:.*\}")
 
         while selsFound.getCount() > 0:
@@ -99,7 +99,7 @@ class LO:
                 importCursor.gotoRange(selFound, False)
                 filename = re.sub(r'{includetext:(.*)}', r'\1', selFound.getString())
                 filename = filename.replace("${path}", pathname)
-                
+
                 prop = PropertyValue()
                 prop.Name = "DocumentTitle"
                 prop.Value = ""
@@ -249,7 +249,7 @@ class LO:
         while cur.gotoNextParagraph(False):
             styles = styles + cur.getPropertyValue("ParaStyleName") + '\n'
         return styles
-    
+
     def EnsureStyles(self):
         name = "Acolyte Question"
         new_style = self.doc.createInstance('com.sun.star.style.ParagraphStyle')
@@ -343,4 +343,3 @@ class LO:
         # for heading_text, heading_style_name in headings:
         # level = getOutlineLevel(heading_style_name)
         # print((level-1)*'\t'+heading_text+ ' '+'('+heading_style_name+')')
-                        

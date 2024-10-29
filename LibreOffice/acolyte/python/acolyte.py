@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 import os, sys
 import uno, unohelper
-from com.sun.star.document import XEventListener
+# from com.sun.star.document import XEventListener
 from com.sun.star.task import XJobExecutor
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.output_parsers import StrOutputParser
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import END, START, StateGraph, MessagesState
-from langgraph.prebuilt import ToolNode
 from pathlib import Path
 
 from LibreOffice import LO
-from Agent import Agent
+from Agent import LangchainAgent
 
 sys.stderr = sys.stdout
 
@@ -30,11 +24,10 @@ class Acolyte(unohelper.Base, XJobExecutor):
         self.dispatchhelper = self.createUnoService("com.sun.star.frame.DispatchHelper")
         self.doc = self.desktop.getCurrentComponent()
 
-        # Langchain and Langgraph
-        api_key = 'XXX'
-        os.environ["OPENAI_API_KEY"] = api_key
-        # self.client = ChatOpenAI(model="gpt-4o-mini")
-        self.client = Agent(self.doc)
+        try:
+            self.client = LangchainAgent(self.doc)
+        except Exception as e:
+            self.show_message_box("Error", str(e))
 
     def trigger(self, command):
         """
@@ -150,49 +143,16 @@ class Acolyte(unohelper.Base, XJobExecutor):
 
     def debug(self):
         cur = self.cursor
-        # texte = cur.getString()
-
-        # Get the configuration provider
-        # config_provider = self.context.ServiceManager.createInstanceWithContext(
-        #     "com.sun.star.configuration.ConfigurationProvider", self.context
-        # )
-
-        # # Access the PathSettings configuration
-        # path_settings = config_provider.createInstanceWithArguments(
-        #     "com.sun.star.configuration.ConfigurationAccess",
-        #     (uno.createUnoStruct("com.sun.star.beans.NamedValue", "nodepath", "/org.openoffice.Office.Paths"),)
-        # )
-
-        # # Get the User-specific configuration path
-        # self.user_config_path = path_settings.getByName("User")
-
-        # dir_path = os.path.dirname(os.path.realpath(__file__))
-
-        # this_doc_url = self.doc.URL
-        # this_doc_sys_path = uno.fileUrlToSystemPath(this_doc_url)
-        # this_doc_parent_path = Path(this_doc_sys_path).parent
 
         lo = LO(self.doc)
         guid = lo.addDocumentGuid()
 
-
-        # Print the path
-        # self.show_message_box("Configuration Path", self.user_config_path)
-        # print(f"LibreOffice configuration directory: {self.user_config_path}")
-        # cur.String = f"""
-        #     - LibreOffice configuration directory: {self.user_config_path}
-        #     - Current directory: {dir_path}
-        # """
-        # cur.String = f"""
-        #     - Current directory: {dir_path}
-        #     - Current document path: {this_doc_parent_path}
-        #     - Document Acolyte Id: {guid}
-        # """
+        folder = self.client.AcolyteFolder
 
         cur.String = f"""
             - Document Acolyte Id: {guid}
+            - Acolyte folder: {folder}
         """
-
 
     # boilerplate code below this point
     def createUnoService(self, name):
