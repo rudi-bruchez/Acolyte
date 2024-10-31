@@ -10,7 +10,6 @@ import uno
 from com.sun.star.beans import PropertyValue
 from com.sun.star.uno import RuntimeException as _rtex
 
-
 def startConsole ():
     "open console from APSO extension"
     try:

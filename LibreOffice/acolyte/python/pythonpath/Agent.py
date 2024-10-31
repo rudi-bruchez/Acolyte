@@ -3,6 +3,7 @@
 import os, sys, uuid, json
 # import sqlite3
 import uno, unohelper
+import yaml
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -16,13 +17,16 @@ from langchain_text_splitters import CharacterTextSplitter
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chains import AnalyzeDocumentChain
 from langchain.chains.llm import LLMChain
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage
 from pathlib import Path
-from Session import Session
+from LibreOffice import LO
 from dotenv import load_dotenv
+from enum import Enum
 
 sys.stderr = sys.stdout
 DOC_ID_NAME = "Acolyte Document Id"
+ContextType = Enum('ContextType', ['Full', 'Chapter', 'Paragraphs', 'Digest', 'TOC', 'Nope'])
 
 class LangchainAgent:
     def __init__(self, doc):
@@ -50,13 +54,16 @@ class LangchainAgent:
         # # Note that we're (optionally) passing the memory when compiling the graph
         # self.langchain_app = self.workflow.compile(checkpointer=self.checkpointer)
 
+        self.__lo = LO(self.doc)
+        self.__setPromptVariables()
         self.__loadApiKeys()
         self.client = ChatOpenAI(model="gpt-4o-mini")
 
     def __loadApiKeys(self):
         # Load environment variables from a .env file located in a specific directory
         # env_path = Path(self.AcolyteFolder, '.env')
-        folder = r"C:\Users\rudi\AppData\Roaming\LibreOffice\4\user"
+        folder = self.__lo.AcolyteUserFolder
+        # folder = r"C:\Users\rudi\AppData\Roaming\LibreOffice\4\user"
         # env_path = os.path.join(self.AcolyteFolder, '.env')
         env_path = os.path.join(folder, '.env')
         load_dotenv(dotenv_path=env_path)
@@ -72,6 +79,94 @@ class LangchainAgent:
         response = self.client.invoke(messages)
         # We return a list, because this will get added to the existing list
         return {"messages": [response]}
+
+    def __loadPrompt(self, prompt_file: str):
+        file = os.path.join(self.__lo.AcolyteUserFolder, "prompt_techbook.yaml")
+        with open(file, 'r', encoding="utf-8") as stream:
+            prompt = yaml.safe_load(stream)
+            return prompt
+
+    def __setPromptVariables(self):
+        self.PromptVariables = {}
+
+        prop = self.doc.DocumentProperties
+
+        # self.PromptVariables['language'] = prop.CharLocale
+        self.PromptVariables['title'] = prop.Title
+
+        self.PromptVariables['subject'] = prop.Subject
+
+        # @property
+        # def Characters(self) -> int:
+        #     return self.doc.CharacterCount
+
+        self.PromptVariables['author'] = prop.Author
+        self.PromptVariables['contributor'] = prop.Contributor 
+        self.PromptVariables['coverage'] = prop.Coverage
+        self.PromptVariables['description'] = prop.Description
+
+        # @property
+        # def DocumentStatistics[PageCount](self) -> str:
+
+        self.PromptVariables['generator'] = prop.Generator
+        
+        # @property
+        # def Identifier(self) -> str:
+        self.PromptVariables['keywords'] = prop.Keywords
+        self.PromptVariables['language'] = Language.Language
+        self.PromptVariables['publisher'] = prop.Publisher
+        self.PromptVariables['source'] = prop.Source
+        self.PromptVariables['type'] = prop.Type
+        
+        # @property
+        # def doc.Location (url)(self) -> str:
+        # @property
+        # def doc.Title = nom du fichier(self) -> str:
+
+    def CreatePrompt(self, prompt_file: str, context_type: ContextType = ContextType.Full) -> str:
+        prompt_info = self.__loadPrompt(prompt_file)
+
+        template = ChatPromptTemplate([
+            ("system", prompt_info.get("system_prompt")),
+            ("user", prompt_info.get("user_prompt")),
+            # ("system", "Voici le contenu du chapitre en cours du livre {title}"),
+            # MessagesPlaceholder("paragraphs"),
+        ])
+
+        if context_type == ContextType.Full:
+            template.append([
+            ("system", "Voici le contenu du livre {title} en cours"),
+            MessagesPlaceholder("document"),
+            ])
+        elif context_type == ContextType.Chapter:
+            template.append([
+            ("system", "Voici le contenu du chapitre en cours du livre {title}"),
+            MessagesPlaceholder("chapter"),
+            ])
+        elif context_type == ContextType.Paragraphs:
+            template.append([
+            ("system", "Voici le contenu des quelques paragraphes précédents du livre {title}"),
+            MessagesPlaceholder("paragraphs"),
+            ])
+        elif context_type == ContextType.Digest:
+            template.append([
+            ("system", "Voici le résumé du livre {title}"),
+            MessagesPlaceholder("summary"),
+            ])
+        elif context_type == ContextType.TOC:
+            template.append([
+            ("system", "Voici la table des matières du livre {title}"),
+            MessagesPlaceholder("toc"),
+            ])
+        # elif context_type == ContextType.Nope:
+        #     template.append([
+        #     ("system", "Aucune information contextuelle fournie pour le livre {title}"),
+        #     ])
+
+        formatted_prompt = template.format(self.PromptVariables)        
+        # formatted_prompt = template.format(subject="SQL Server", title="Réussir SQL Server")        
+        # prompt_template.invoke({"subject": "SQL Server", "title": "Réussir SQL Server"})        
+        return formatted_prompt
 
     @property
     def DocumentGuid(self) -> str:

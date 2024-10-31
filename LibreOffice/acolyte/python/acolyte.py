@@ -142,17 +142,23 @@ class Acolyte(unohelper.Base, XJobExecutor):
         return new_doc
 
     def debug(self):
-        cur = self.cursor
+        # cur = self.cursor
+        vc = self.doc.CurrentController.ViewCursor
+        # cur = self.doc.Text.createTextCursorByRange(vc.getStart())
 
         lo = LO(self.doc)
-        guid = lo.addDocumentGuid()
+        # try:
+        #     toc = lo.getTOC()
+        #     vc.setString(toc)
+        # except Exception as e:
+        #     self.show_message_box("Error", str(e))
 
-        folder = self.client.AcolyteFolder
+        try:
+            p10 = lo.getChapterFromParagraph()
+            vc.setString(p10)
+        except Exception as e:
+            self.show_message_box("Error", str(e))
 
-        cur.String = f"""
-            - Document Acolyte Id: {guid}
-            - Acolyte folder: {folder}
-        """
 
     # boilerplate code below this point
     def createUnoService(self, name):

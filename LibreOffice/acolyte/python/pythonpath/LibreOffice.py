@@ -12,7 +12,7 @@ class LO:
         self.doc_id_name = "Acolyte Document Id"
 
         self.doc = doc
-        # self.context = uno.getComponentContext()
+        self.context = uno.getComponentContext()
         # self.desktop = self.context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", self.context)
         # self.frame = self.desktop.getCurrentFrame()
         # self.dispatcher = self.frame.getDispatcher()
@@ -22,17 +22,70 @@ class LO:
         # self.current_controller_frame = self.current_controller.getFrame()
         # self.current_controller_frame_name = self.current_controller_frame.getName
 
-    def getTOC(self) -> str:
-        cur = self.doc.Text.createTextCursor()
-        cur.gotoStart(False)
+    @property
+    def UserFolder(self) -> str:
+        # obtenir le répertoire utilisateur
+        user_folder = self.context.getServiceManager().createInstanceWithContext('com.sun.star.util.PathSubstitution', 
+            self.context).getSubstituteVariableValue("user")
+        return uno.fileUrlToSystemPath(user_folder)
 
-    def getTOC2(self) -> str:
+    @property
+    def AcolyteUserFolder(self) -> str:
+        # obtenir le répertoire utilisateur Acolyte
+        uf = os.path.join(self.UserFolder, 'Acolyte')
+        if not os.path.exists(uf):
+            os.mkdir(uf)
+        return uf
+
+    def getXPreviousParagraphs(self, num: int) -> str:
+        vc = self.doc.CurrentController.ViewCursor.getStart()
+        tc = self.doc.Text.createTextCursorByRange(vc)
+
+        if not tc.isEndOfParagraph:
+            tc.gotoEndOfParagraph(False)
+
+        for i in range(num):
+            tc.gotoPreviousParagraph(True)
+
+        return tc.String
+        # return vc.getString()
+
+    def getChapterFromParagraph(self) -> str:
+        vc = self.doc.CurrentController.ViewCursor.getStart()
+        tc = self.doc.Text.createTextCursorByRange(vc)
+
+        if not tc.isEndOfParagraph:
+            tc.gotoEndOfParagraph(False)
+
+        paragraphs = []
+
+        while 1 == 1:
+            tc.gotoPreviousParagraph(False)
+            tc.gotoEndOfParagraph(True)
+            p = tc.String
+            ol = tc.getPropertyValue("OutlineLevel")
+            if ol > 0:
+                p = '#'*ol + ' ' + p
+            paragraphs.insert(0, p)
+            # if tc.ParaStyleName == "Heading 1":
+            #     break
+            # if tc.getPropertyValue("OutlineLevel") == 0:
+            #     paragraphs.append(tc.String)
+            if tc.getPropertyValue("OutlineLevel") == 1:
+                break
+
+        return '\n\n'.join(paragraphs)
+
+    # def getTOC(self) -> str:
+    #     cur = self.doc.Text.createTextCursor()
+    #     cur.gotoStart(False)
+
+    def getTOC(self) -> str:
         toc = self.doc.createInstance('com.sun.star.text.ContentIndex')
+        toc.setPropertyValue("Level", 10)  # Include all heading levels
         toc.CreateFromOutline = True
-        # text = self.doc.obj.Text
-        # cursor = text.createTextCursor()
-        # text.insertTextContent(cursor, toc, False)
-        toc.update()
+        # toc.update()
+        return toc
 
     # def GetHeadings(self):
     #     # https://api.libreoffice.org/docs/idl/ref/namespacecom_1_1sun_1_1star_1_1style_1_1ParagraphStyleCategory.html
